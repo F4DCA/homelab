@@ -1,0 +1,6 @@
+[Unit]
+Description=Backup HDD bind mounts to PBS
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/pbs-binds.sh

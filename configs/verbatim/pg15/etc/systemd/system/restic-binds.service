@@ -1,0 +1,6 @@
+[Unit]
+Description=Backup HDD bind mounts to restic
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/restic-binds.sh

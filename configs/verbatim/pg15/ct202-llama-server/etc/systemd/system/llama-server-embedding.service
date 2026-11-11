@@ -1,0 +1,27 @@
+[Unit]
+Description=llama.cpp Qwen3-Embedding-0.6B Server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=llama-server
+Group=llama-server
+ExecStart=/home/llama-server/.local/bin/llama serve \
+  --model /home/llama-server/models/Qwen3-Embedding-0.6B-Q8_0.gguf \
+  --host 0.0.0.0 \
+  --port 10802 \
+  --ctx-size 4096 \
+  --gpu-layers 99 \
+  --embedding \
+  --pooling last \
+  --sleep-idle-seconds 120 \
+  --parallel 1
+Restart=on-failure
+RestartSec=5
+Environment="HOME=/home/llama-server"
+Nice=10
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

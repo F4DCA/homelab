@@ -1,0 +1,20 @@
+[Unit]
+Description=Qwen3-Embedding-4B (ROCm) embedding API
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h
+ExecStart=/usr/bin/llama-server -m %h/models/Qwen3-Embedding-4B-Q8_0.gguf \
+  --alias Qwen3-Embedding-4B-Q8_0 --embedding --pooling last --embd-normalize 2 \
+  --host 127.0.0.1 --port 8081 \
+  -dev ROCm0 -ngl 999 -sm none -fa on \
+  -c 32768 -np 4 -ctk q8_0 -ctv q8_0 \
+  -b 2048 -ub 1024 -t 8 \
+  --sleep-idle-seconds 1200 --metrics --no-webui
+Restart=on-failure
+RestartSec=5s
+StartLimitBurst=3
+
+[Install]
+WantedBy=default.target

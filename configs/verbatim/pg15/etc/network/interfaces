@@ -1,0 +1,23 @@
+auto lo
+iface lo inet loopback
+
+iface nic0 inet manual
+
+auto vmbr0
+iface vmbr0 inet static
+        address 192.0.2.10/24
+        gateway 192.0.2.1
+        bridge-ports nic0
+        bridge-stp off
+        bridge-fd 0
+        post-up ip route replace 100.64.0.0/16 via 192.0.2.2
+        post-up iptables -t nat -A POSTROUTING -d 192.0.2.20 -j MASQUERADE
+        post-down iptables -t nat -D POSTROUTING -d 192.0.2.20 -j MASQUERADE
+
+iface vmbr0 inet6 auto
+        accept_ra 2
+        autoconf 1
+
+iface nic1 inet manual
+
+source /etc/network/interfaces.d/*

@@ -1,0 +1,11 @@
+[Unit]
+Description=SnapRAID AIO script
+After=local-fs.target
+
+[Service]
+Type=oneshot
+User=root
+ExecStart=/opt/snapraid-aio-script/snapraid-aio-script.sh
+TimeoutStartSec=infinity
+Nice=10
+IOSchedulingClass=idle

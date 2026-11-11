@@ -1,0 +1,10 @@
+auto lo
+iface lo inet loopback
+
+auto eth0
+iface eth0 inet static
+        address 192.0.2.4/24
+        gateway 192.0.2.1
+        post-up ip route add 198.51.100.0/24 via 192.0.2.2
+
+iface eth0 inet6 dhcp

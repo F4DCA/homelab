@@ -1,0 +1,11 @@
+[Unit]
+Description=Initialize NVIDIA devices at boot
+Before=pve-guests.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/nvidia-smi
+RemainAfterExit=true
+
+[Install]
+WantedBy=multi-user.target

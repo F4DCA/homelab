@@ -1,0 +1,11 @@
+[Unit]
+Description=Strata inference server
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/home/llama-server/.local/bin/strata launch --family qwen36 --model ud-q6_k_xl --vision on --parallel 1 --mtp on --access lan --port 8080 --context 64k --drafting mtp --no-tui
+ExecStop=/home/llama-server/.local/bin/strata launch --stop
+
+[Install]
+WantedBy=default.target

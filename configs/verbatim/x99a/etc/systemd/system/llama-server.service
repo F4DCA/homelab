@@ -1,0 +1,41 @@
+[Unit]
+Description=llama.cpp API Server
+After=network.target
+Conflicts=llama-server-cpu.service
+
+[Service]
+Type=simple
+User=llama-server
+Group=llama-server
+WorkingDirectory=/home/llama-server
+ExecStart=/usr/bin/llama-server \
+  --device ROCm0 \
+  --model /home/llama-server/models/Ornith-1.5-35B-Q6_K.gguf \
+  --mmproj /home/llama-server/models/mmproj-F16.gguf \
+  --spec-draft-model /home/llama-server/models/Qwen3.6-35B-A3B-MTP-q8_0.gguf \
+  --spec-type draft-mtp \
+  --spec-draft-n-max 2 \
+  --spec-draft-p-min 0.1 \
+  --spec-draft-p-split 0.1 \
+  --host 0.0.0.0 \
+  --port 8080 \
+  --temp 0.7 \
+  --top-p 0.95 \
+  --top-k 20 \
+  --min-p 0.03 \
+  --cache-type-k q8_0 \
+  --cache-type-v q8_0 \
+  --cache-reuse 256 \
+  --threads 22 \
+  --cpu-moe \
+  --ctx-size 262144 \
+  --jinja \
+  --chat-template-file /home/llama-server/models/chat_template.jinja \
+  --reasoning-format deepseek \
+  --load-mode mlock
+
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target

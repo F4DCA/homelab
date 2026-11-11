@@ -1,0 +1,32 @@
+[Unit]
+Description=llama.cpp Embedding API Server
+After=network.target
+Conflicts=llama-server-cpu.service
+
+[Service]
+Type=simple
+User=llama-server
+Group=llama-server
+WorkingDirectory=/home/llama-server
+ExecStart=/usr/bin/llama-server \
+  --device ROCm0 \
+  --model /home/llama-server/models/Qwen3-Embedding-4B-Q8_0.gguf \
+  --alias Qwen3-Embedding-4B-Q8_0 \
+  --embedding \
+  --pooling last \
+  --embd-normalize 2 \
+  --host 0.0.0.0 \
+  --port 8081 \
+  -fit on \
+  -sm none \
+  -fa on \
+  -c 32768 \
+  -np 4 \
+  -ctk q8_0 \
+  -ctv q8_0
+
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
