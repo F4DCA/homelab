@@ -65,9 +65,9 @@ flowchart TB
 | Machine | LAN | NetBird | OS | Role |
 | --- | --- | --- | --- | --- |
 | `PG15` | `192.0.2.10` | none (CT 100 is the peer) | Debian 13, Proxmox VE | 17 LXC containers and one VM |
-| `X99A` | `192.0.2.20` | `100.64.0.13` | Arch Linux, Incus | Bulk storage, LAN-side PBS, compute |
+| `X99A` | `192.0.2.20` | `100.64.0.13` | Arch Linux, Incus | Bulk storage, LAN-side PBS, compute, LLM server |
 | `B860H` | `192.0.2.30` | `100.64.0.12` | Armbian, ZTE ZXV10 B860H v2 | Pi-hole and unbound |
-| `dv6` | `198.51.100.10` | `100.64.1.11` | Debian 13, Incus | Offsite PBS, Syncthing, authoring container |
+| `dv6` | `198.51.100.10` | `100.64.1.11` | Debian 13, Incus | Offsite PBS, offsite DNS, Syncthing, authoring container |
 
 ## Hardware
 
@@ -95,7 +95,7 @@ published through the Cloudflare tunnel.
 | 103 | `syncthing` | File sync | 8384, 22000, 21027/udp | running |
 | 104 | `sftpgo` | SFTP and WebDAV | 2022, 8080, 8090 | running |
 | 105 | `baikal` | CalDAV and CardDAV | 80 | running |
-| 106 | `ntfy` | Push notifications | 80 | running |
+| 106 | `ntfy` | Push notifications; alert sink for SMART and SnapRAID | 80 | running |
 | 200 | `haos` | Home Assistant OS VM | 8123, 4357, 18555 | running |
 | 201 | `agents` | Former authoring container | 22 | stopped |
 | 202 | `llama-server` | llama.cpp embedding server | 10802 | running |
@@ -116,34 +116,47 @@ storage.
 
 ### X99A
 
-| Guest | Address | Ports | Role |
+| Guest or service | Address | Ports | Role |
 | --- | --- | --- | --- |
 | `proxmox-backup-server` (`x99a-pbs`) | `192.0.2.21` | 8007 | PBS, datastore `pg15` |
 | `agents` (`compute`) | `192.0.2.22` | 22 | 20 cores, 24 GB, RX 6700 XT; `ssh compute` |
+| Strata (host user unit) | `192.0.2.20` | 8080 | LLM server, Qwen3.6 |
 
-Strata serves Qwen3.6 on `:8080`, and restic writes to `/mnt/pool/restic-backups` on X99A
-from both PG15 and dv6. The Immich ML container is stopped. Bulk storage is mergerfs
-`/mnt/pool` over `/mnt/static`, `/mnt/scratch1` and `/mnt/scratch2`, with `/mnt/parity` as
-SnapRAID parity.
+Restic writes to `/mnt/pool/restic-backups` on X99A from both PG15 and dv6, and the
+Immich ML container is stopped. Bulk storage is mergerfs `/mnt/pool` over `/mnt/static`,
+`/mnt/scratch1` and `/mnt/scratch2`, with `/mnt/parity` as SnapRAID parity.
 
 Details: [`docs/machines.md`](docs/machines.md).
 
 ### dv6
 
-| Guest | Address | Ports | Role |
+| Guest or service | Address | Ports | Role |
 | --- | --- | --- | --- |
+| `pihole` (host service) | `198.51.100.10` | 53, 80, 443, 123 | Pi-hole and unbound; DNS for the offsite LAN |
 | `agents` (`agents-dv6`) | `198.51.100.11` | 22 | Authoring container and this checkout |
 | `routefinder` | `198.51.100.12` | 8000 | Route search; inbound-only |
 | `overleaf` | `198.51.100.13` | 7777 | Overleaf; public via Cloudflare tunnel |
 
-The host also runs Proxmox Backup Server on `:8007` (datastore `pg15`), Syncthing, Pi-hole
-and unbound. Details: [`docs/machines.md`](docs/machines.md).
+The host also runs Proxmox Backup Server on `:8007` (datastore `pg15`) and Syncthing.
+Details: [`docs/machines.md`](docs/machines.md).
 
 ### B860H
 
 Pi-hole v6 and unbound, using the same configuration as dv6: unbound on
 `127.0.0.1:5335` over DoT, private domain `example.net`. The public `example.net` zone is at
 Cloudflare, and NPM issues its certificates with the Cloudflare DNS challenge.
+
+## Alerts
+
+`ntfy` (CT 106, `192.0.2.8`, published as `ntfy.example.net` by CT 101) is where this lab
+sends its alerts. `smartd` on PG15, X99A and dv6 post to `smartd-pg15`, `smartd-x99a` and
+`smartd-dv6`; the SnapRAID script on X99A posts to `snapraid-x99a`. Each host keeps its
+own SMART topic, so a silent disk and a quiet host look different.
+
+The server has no login, so the topic name is the only thing protecting a mailbox, and
+messages expire after twelve hours. That is fine for a device on the LAN and the mesh, and
+it is why `ntfy.example.net` is not published through the tunnel. Details:
+[`docs/architecture.md`](docs/architecture.md#notifications).
 
 ## How the machines connect
 

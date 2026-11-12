@@ -39,9 +39,12 @@ Two Incus guests:
   (builds, test suites, package installs) run there over `ssh compute`.
 
 The host also runs Strata on `:8080`, serving a Qwen3.6 model, and keeps an Immich
-machine-learning container on `:3003` that was stopped on 2026-11-10. Its restic
-destination lives on this machine too: `/mnt/pool/restic-backups`, reached over SFTP. Restic
-snapshots of `PG15`'s bind mounts therefore sit on the same pool they protect.
+machine-learning container on `:3003` that was stopped on 2026-11-10. `smartd` there posts
+to the `smartd-x99a` topic, and the SnapRAID script posts its start and completion messages
+to `snapraid-x99a`.
+
+The restic destination lives on this machine too: `/mnt/pool/restic-backups`, reached over
+SFTP. Restic snapshots of `PG15`'s bind mounts therefore sit on the same pool they protect.
 
 ## B860H
 
@@ -60,12 +63,17 @@ RAM. The root filesystem is an LVM volume of about 110 GB; the 1 TB data disk is
 | Service | Listener | Notes |
 |---|---|---|
 | Proxmox Backup Server | `:8007` | datastore `pg15`, consumed by `PG15` as storage `dv6-pbs` over the mesh |
-| Pi-hole and unbound | `127.0.0.1:5335` | same pair as the B860H |
+| Pi-hole and unbound | `:53`, web `:80`/`:443`, NTP `:123` | the offsite resolver; unbound on `127.0.0.1:5335` over DoT, same pair as the B860H |
 | Incus | none | containers `agents`, `routefinder`, `overleaf`; storage pools `default` and `ssd` |
 | Syncthing | `:8384` | runs as `operator`, data in `/mnt/hdd/syncthing` |
 | restic | timer, daily 00:30 | stops every Incus container, copies their storage to X99A, starts them again |
 | NetBird | none | client, and a peer for `192.0.2.0/24` |
+| smartd | none | posts disk-health warnings to the `smartd-dv6` topic |
 | Podman | none | installed, no containers, no quadlets |
+
+Pi-hole answers DNS for the whole offsite LAN, not just for the host. A query sent from
+`agents-dv6` proves less than it looks, because that container shares the host's kernel and
+reaches Pi-hole over the Incus bridge rather than the physical network.
 
 One disk serves two purposes: `/dev/sdb1` is mounted both at `/mnt/hdd` and at
 `/var/lib/incus/storage-pools/default`, so the Incus guests and the PBS datastore share a

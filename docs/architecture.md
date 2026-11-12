@@ -77,7 +77,7 @@ All containers share one shape: unprivileged, `nesting` and `keyctl` on, Debian,
 | 103 | `syncthing` | LXC | `192.0.2.5` | 2c / 256M / 8G | File sync; data in `/mnt/hdd/syncthing` |
 | 104 | `sftpgo` | LXC | `192.0.2.6` | 2c / 128M / 4G | SFTP and WebDAV file server |
 | 105 | `baikal` | LXC | `192.0.2.7` | 1c / 128M / 4G | CalDAV and CardDAV |
-| 106 | `ntfy` | LXC | `192.0.2.8` | 1c / 128M / 2G | Push notifications |
+| 106 | `ntfy` | LXC | `192.0.2.8` | 1c / 128M / 2G | Push notifications; the alert sink for SMART and SnapRAID |
 | 200 | `haos` | VM | guest-controlled | 2c / 4096M / 32G | Home Assistant OS: QEMU agent, EFI disk, `serial0` socket |
 | 201 | `agents` | LXC | `192.0.2.100` | 6c / 6144M / 40G | Stopped. Authoring container, moved to dv6 |
 | 202 | `llama-server` | LXC | `192.0.2.101` | 4c / 1024M / 16G | llama.cpp embedding server on `:10802` |
@@ -123,3 +123,23 @@ restored without its mounts comes back with empty data and the wrong paths.
 
 Both PBS storages are marked shared, use `root@pam`, and pin a certificate fingerprint.
 Free space was captured on 2026-11-07.
+
+## Notifications
+
+Alerts do not go through Proxmox. They go to `ntfy` in CT 106, which CT 101 publishes as
+`ntfy.example.net` and forwards to `192.0.2.8:80`.
+
+| Source | Host | Trigger | Topic |
+|---|---|---|---|
+| `smartd` | PG15 | SMART warning or failure | `smartd-pg15` |
+| `smartd` | X99A | SMART warning or failure | `smartd-x99a` |
+| `smartd` | dv6 | SMART warning or failure | `smartd-dv6` |
+| SnapRAID script | X99A | `snapraid-aio.timer`, daily 04:00 | `snapraid-x99a` |
+
+Each host reports to its own SMART topic, so an empty topic means no disk has crossed a
+threshold rather than a hook that stopped firing. The SnapRAID script posts a start
+message and a completion message per run.
+
+The server runs with `enable_login=false` and `require_login=false`. The topic name is the
+only thing standing between a stranger on the network and the messages, and they expire
+after twelve hours. `GET /<topic>/json` returns one JSON object per line.

@@ -14,4 +14,6 @@ The remaining PG15 containers use the default static `eth0` configuration and ar
 duplicated here. The effective addresses are in [`../../docs/architecture.md`](../../docs/architecture.md).
 
 The SnapRAID AIO script itself is upstream v3.4 from `auanasgheps/snapraid-aio-script`; only
-its unit and timer are copied.
+its unit and timer are copied. The audit did not capture its
+`/opt/snapraid-aio-script/script-config.conf`, so where it sends notifications is recorded in
+[the architecture notes](../../docs/architecture.md#notifications) instead.
