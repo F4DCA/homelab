@@ -88,7 +88,8 @@ internally over DNS-over-TLS. Public names live in a Cloudflare zone, where
 Certificates come from Cloudflare's DNS challenge, issued and renewed by Nginx Proxy
 Manager on CT 101. NPM terminates TLS and forwards to the backend over plain HTTP, either
 on the backend's own LAN address or at `192.0.2.10:<port>` for anything still published on
-the host.
+the host. It also publishes `karakeep.example.net` for the bookmark guest on the offsite
+LAN, over the mesh rather than through the tunnel.
 
 The tunnel is outbound only. No inbound port is opened at the edge for a proxied service:
 CT 102 keeps a connection to Cloudflare and traffic arrives down it.

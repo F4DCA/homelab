@@ -5,7 +5,8 @@ devices and unrelated NetBird peers are left out. The inventories in [`docs/`](d
 machine by machine, then cover how the network fits together.
 
 The hardware, guests and ports below come from root audits of PG15, X99A and dv6 on
-2026-11-10.
+2026-11-10, with the dv6 guest list and its open ports rechecked on 2026-11-21. Addresses
+use the documentation ranges from RFC 5737.
 
 ## Topology
 
@@ -34,10 +35,14 @@ flowchart TB
             AG["agents .11:22"]
             RF["routefinder .12:8000"]
             OL["overleaf .13:7777"]
+            MCP["mcp .14:3000"]
+            KAR["karakeep .15:3000"]
             %% keep the dv6 services in one vertical column
             PBS6 ~~~ AG
             AG ~~~ RF
             RF ~~~ OL
+            OL ~~~ MCP
+            MCP ~~~ KAR
         end
     end
 
@@ -56,6 +61,7 @@ flowchart TB
     PG15HOST -. "PBS + restic" .-> X99A
     PG15HOST -. "PBS backup" .-> PBS6
     OL -. "public" .-> CT102
+    KAR -. "published name" .-> CT101
     IMMICH -. "public" .-> CT102
     CT102 -. "tunnel" .-> CF
 ```
@@ -122,8 +128,10 @@ storage.
 | `agents` (`compute`) | `192.0.2.22` | 22 | 20 cores, 24 GB, RX 6700 XT; `ssh compute` |
 | Strata (host user unit) | `192.0.2.20` | 8080 | LLM server, Qwen3.6 |
 
-Restic writes to `/mnt/pool/restic-backups` on X99A from both PG15 and dv6, and the
-Immich ML container is stopped. Bulk storage is mergerfs `/mnt/pool` over `/mnt/static`,
+PG15's restic job writes to `/mnt/pool/restic-backups` on X99A. dv6's job is reported to
+write to the SFTPGo tree on PG15 (CT 104) instead since 2026-11-15, but the host has not been
+recaptured (see [`docs/machines.md`](docs/machines.md)). The Immich ML container is
+stopped. Bulk storage is mergerfs `/mnt/pool` over `/mnt/static`,
 `/mnt/scratch1` and `/mnt/scratch2`, with `/mnt/parity` as SnapRAID parity.
 
 Details: [`docs/machines.md`](docs/machines.md).
@@ -136,6 +144,8 @@ Details: [`docs/machines.md`](docs/machines.md).
 | `agents` (`agents-dv6`) | `198.51.100.11` | 22 | Authoring container and this checkout |
 | `routefinder` | `198.51.100.12` | 8000 | Route search; inbound-only |
 | `overleaf` | `198.51.100.13` | 7777 | Overleaf; public via Cloudflare tunnel |
+| `mcp` | `198.51.100.14` | 3000 | Firecrawl MCP server; consumed by the authoring container, no web UI |
+| `karakeep` | `198.51.100.15` | 3000 | Bookmark manager; published as `karakeep.example.net` by CT 101 |
 
 The host also runs Proxmox Backup Server on `:8007` (datastore `pg15`) and Syncthing.
 Details: [`docs/machines.md`](docs/machines.md).
