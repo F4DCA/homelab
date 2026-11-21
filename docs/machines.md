@@ -113,9 +113,11 @@ so the containers are down for as long as the backup runs. It backs up
 `/mnt/hdd/incus/storage-pools/default/containers` and `/mnt/hdd/agents`.
 
 The verbatim [`restic-containers.sh`](../configs/verbatim/dv6/usr/local/bin/restic-containers.sh)
-is still the 2026-11-10 capture and names X99A as the repository. The 2026-11-15 re-point to
-SFTPGo on PG15 (CT 104) has not been recaptured, so the script, the backup set and the tag stay as
-recorded.
+is still the 2026-11-10 capture and names X99A as the repository. The 2026-11-15 re-point
+to SFTPGo on PG15 (CT 104) has not been recaptured, so the script, the backup set and the
+tag stay as recorded. As captured, the two jobs write to the same X99A path, PG15 over the
+LAN at `192.0.2.20` under tag `binds` and dv6 over the mesh at `100.64.0.13` under tag
+`incus`; they stop sharing a repository only if the re-point turns out to be real.
 
 The big pool on X99A has no healthy copy of its own. It is the restic destination, and its
 own backup goes to dv6. The figures here come from a root audit of each host on 2026-11-10;
